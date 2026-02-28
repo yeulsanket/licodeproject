@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Analyzer — Placement Analytics & AI Career Guidance</title>
+    <meta name="description"
+        content="Comprehensive placement analytics dashboard with AI-powered career guidance, skill gap analysis, and salary prediction.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Student<span>Analyzer</span></h1>
+                    <p>Placement Intelligence</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard" id="nav-dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="management" id="nav-management">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Management</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="ai-analysis" id="nav-ai-analysis">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Analysis</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="admin" id="nav-admin">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin Panel</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="settings" id="nav-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="status-dot"></div>
+                    <span>AI Engine Active</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+        <main class="main-content">
+
+            <!-- ─── DASHBOARD ─── -->
+            <section class="tab-content active" id="tab-dashboard">
+                <div class="section-header">
+                    <div>
+                        <h2>Placement Dashboard</h2>
+                        <p class="subtitle">Real-time analytics and insights</p>
+                    </div>
+                    <button class="btn btn-glass" id="refresh-dashboard" onclick="window.DashboardModule.load()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card gradient-indigo">
+                        <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-total-students">—</span>
+                            <span class="stat-label">Total Students</span>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-teal">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-placed">—</span>
+                            <span class="stat-label">Placed Students</span>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-purple">
+                        <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-rate">—</span>
+                            <span class="stat-label">Placement Rate</span>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-amber">
+                        <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-avg-pkg">—</span>
+                            <span class="stat-label">Avg Package (LPA)</span>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-rose">
+                        <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-highest-pkg">—</span>
+                            <span class="stat-label">Highest Package (LPA)</span>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-cyan">
+                        <div class="stat-icon"><i class="fas fa-building"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-companies">—</span>
+                            <span class="stat-label">Total Companies</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-pie"></i> Placement Overview</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-placement-overview"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-bar"></i> Salary Distribution</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-salary-dist"></canvas></div>
+                    </div>
+                    <div class="chart-card chart-wide">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-code-branch"></i> Branch-wise Statistics</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-branch-stats"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-star"></i> Top Hiring Companies</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-top-companies"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-bullseye"></i> CGPA vs Package</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-cgpa-pkg"></canvas></div>
+                    </div>
+                    <div class="chart-card chart-wide">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-line"></i> Monthly Placement Trends</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-monthly-trends"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-code"></i> Top In-Demand Skills</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-top-skills"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-venus-mars"></i> Gender Distribution</h3>
+                        </div>
+                        <div class="chart-body"><canvas id="chart-gender"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── MANAGEMENT ─── -->
+            <section class="tab-content" id="tab-management">
+                <div class="section-header">
+                    <div>
+                        <h2>Data Management</h2>
+                        <p class="subtitle">Students & Companies</p>
+                    </div>
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-subtab="students-tab" id="btn-students-tab">
+                            <i class="fas fa-user-graduate"></i> Students
+                        </button>
+                        <button class="sub-tab" data-subtab="companies-tab" id="btn-companies-tab">
+                            <i class="fas fa-building"></i> Companies
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Students Sub-Tab -->
+                <div class="sub-tab-content active" id="students-tab">
+                    <div class="filters-bar">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="student-search" placeholder="Search students by name or email...">
+                        </div>
+                        <select class="select-filter" id="branch-filter">
+                            <option value="">All Branches</option>
+                        </select>
+                        <select class="select-filter" id="placed-filter">
+                            <option value="">All Status</option>
+                            <option value="true">Placed</option>
+                            <option value="false">Not Placed</option>
+                        </select>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="students-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Branch</th>
+                                    <th>CGPA</th>
+                                    <th>Skills</th>
+                                    <th>Projects</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="students-pagination"></div>
+                </div>
+
+                <!-- Companies Sub-Tab -->
+                <div class="sub-tab-content" id="companies-tab">
+                    <div class="filters-bar">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="company-search" placeholder="Search companies...">
+                        </div>
+                    </div>
+                    <div class="company-grid" id="company-grid"></div>
+                </div>
+            </section>
+
+            <!-- ─── AI ANALYSIS ─── -->
+            <section class="tab-content" id="tab-ai-analysis">
+                <div class="section-header">
+                    <div>
+                        <h2>AI-Powered Analysis</h2>
+                        <p class="subtitle">Smart career intelligence tools</p>
+                    </div>
+                </div>
+
+                <div class="ai-tabs">
+                    <button class="ai-tab active" data-aitab="resume-analyzer" id="btn-resume-analyzer">
+                        <i class="fas fa-file-alt"></i> Resume Analyzer
+                    </button>
+                    <button class="ai-tab" data-aitab="skill-gap" id="btn-skill-gap">
+                        <i class="fas fa-puzzle-piece"></i> Skill Gap
+                    </button>
+                    <button class="ai-tab" data-aitab="salary-predictor" id="btn-salary-predictor">
+                        <i class="fas fa-coins"></i> Salary Predictor
+                    </button>
+                    <button class="ai-tab" data-aitab="career-roadmap" id="btn-career-roadmap">
+                        <i class="fas fa-road"></i> Career Roadmap
+                    </button>
+                    <button class="ai-tab" data-aitab="job-matching" id="btn-job-matching">
+                        <i class="fas fa-briefcase"></i> Job Matching
+                    </button>
+                </div>
+
+                <!-- Resume Analyzer -->
+                <div class="ai-tab-content active" id="resume-analyzer">
+                    <div class="ai-card">
+                        <h3><i class="fas fa-magic"></i> Smart Resume Analysis</h3>
+                        <p>Paste your resume text and get AI-powered insights, skill extraction, and match scoring.</p>
+                        <div class="form-group">
+                            <label>Resume Text</label>
+                            <textarea id="resume-text" rows="8"
+                                placeholder="Paste your resume content here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Role</label>
+                            <input type="text" id="resume-target-role" placeholder="e.g. Full Stack Developer">
+                        </div>
+                        <button class="btn btn-primary btn-glow" id="analyze-resume-btn"
+                            onclick="window.AIModule.analyzeResume()">
+                            <i class="fas fa-rocket"></i> Analyze Resume
+                        </button>
+                        <div class="ai-result" id="resume-result"></div>
+                    </div>
+                </div>
+
+                <!-- Skill Gap -->
+                <div class="ai-tab-content" id="skill-gap">
+                    <div class="ai-card">
+                        <h3><i class="fas fa-search-plus"></i> AI Skill Gap Analysis</h3>
+                        <p>Compare your current profile against industry requirements for any target role.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Select Student</label>
+                                <select id="skillgap-student"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Role</label>
+                                <input type="text" id="skillgap-role" placeholder="e.g. Data Scientist">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-glow" onclick="window.AIModule.skillGapAnalysis()">
+                            <i class="fas fa-search"></i> Analyze Gap
+                        </button>
+                        <div class="ai-result" id="skillgap-result"></div>
+                    </div>
+                </div>
+
+                <!-- Salary Predictor -->
+                <div class="ai-tab-content" id="salary-predictor">
+                    <div class="ai-card">
+                        <h3><i class="fas fa-chart-line"></i> AI Salary Predictor</h3>
+                        <p>Get an estimated salary range based on your profile using AI prediction.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>CGPA</label>
+                                <input type="number" id="salary-cgpa" min="0" max="10" step="0.1" placeholder="7.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Branch</label>
+                                <select id="salary-branch">
+                                    <option>Computer Science</option>
+                                    <option>Information Technology</option>
+                                    <option>Electronics</option>
+                                    <option>Mechanical</option>
+                                    <option>Civil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Projects</label>
+                                <input type="number" id="salary-projects" min="0" max="20" placeholder="3">
+                            </div>
+                            <div class="form-group">
+                                <label>Internships</label>
+                                <input type="number" id="salary-internships" min="0" max="10" placeholder="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Skills (comma-separated)</label>
+                            <input type="text" id="salary-skills" placeholder="Python, React, SQL, Docker">
+                        </div>
+                        <button class="btn btn-primary btn-glow" onclick="window.AIModule.predictSalary()">
+                            <i class="fas fa-calculator"></i> Predict Salary
+                        </button>
+                        <div class="ai-result" id="salary-result"></div>
+                    </div>
+                </div>
+
+                <!-- Career Roadmap -->
+                <div class="ai-tab-content" id="career-roadmap">
+                    <div class="ai-card">
+                        <h3><i class="fas fa-map-marked-alt"></i> Personalized Career Roadmap</h3>
+                        <p>Generate a detailed 6-month career plan tailored to your goals and profile.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Select Student</label>
+                                <select id="roadmap-student"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Career Goal</label>
+                                <input type="text" id="roadmap-goal" placeholder="e.g. ML Engineer at Google">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Package (LPA, optional)</label>
+                            <input type="number" id="roadmap-package" min="0" step="0.5" placeholder="15">
+                        </div>
+                        <button class="btn btn-primary btn-glow" onclick="window.AIModule.generateRoadmap()">
+                            <i class="fas fa-route"></i> Generate Roadmap
+                        </button>
+                        <div class="ai-result" id="roadmap-result"></div>
+                    </div>
+                </div>
+
+                <!-- Job Matching -->
+                <div class="ai-tab-content" id="job-matching">
+                    <div class="ai-card">
+                        <h3><i class="fas fa-handshake"></i> AI Job Recommendations</h3>
+                        <p>Get personalized company recommendations based on your AI-profiled skillset and industry
+                            trends.</p>
+                        <div class="form-group" style="max-width:300px">
+                            <label>Select Student</label>
+                            <select id="jobmatch-student"></select>
+                        </div>
+                        <button class="btn btn-primary btn-glow" onclick="window.AIModule.getJobRecommendations()">
+                            <i class="fas fa-search-dollar"></i> Find Matches
+                        </button>
+                        <div class="ai-result" id="jobmatch-result"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── ADMIN ─── -->
+            <section class="tab-content" id="tab-admin">
+                <div class="section-header">
+                    <div>
+                        <h2>Admin Panel</h2>
+                        <p class="subtitle">System management & exports</p>
+                    </div>
+                </div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-icon gradient-indigo"><i class="fas fa-database"></i></div>
+                        <h3>Database Stats</h3>
+                        <div id="admin-db-stats" class="admin-stats-list"></div>
+                        <button class="btn btn-glass" onclick="window.AdminModule.loadStats()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-icon gradient-teal"><i class="fas fa-file-csv"></i></div>
+                        <h3>Export Data</h3>
+                        <p>Download placement data as CSV files.</p>
+                        <button class="btn btn-primary" onclick="window.AdminModule.exportStudents()">
+                            <i class="fas fa-download"></i> Export Students
+                        </button>
+                        <button class="btn btn-primary" onclick="window.AdminModule.exportPlacements()"
+                            style="margin-top:0.5rem">
+                            <i class="fas fa-download"></i> Export Placements
+                        </button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-icon gradient-amber"><i class="fas fa-edit"></i></div>
+                        <h3>Data Management</h3>
+                        <p>Manually add students or companies to the directory.</p>
+                        <button class="btn btn-primary" onclick="window.StudentManager.showAddForm()"
+                            style="width:100%">
+                            <i class="fas fa-plus"></i> Add New Student
+                        </button>
+                        <button class="btn btn-glass" onclick="window.CompanyManager.showAddForm()"
+                            style="width:100%; margin-top:0.5rem">
+                            <i class="fas fa-plus"></i> Add New Company
+                        </button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-icon gradient-rose"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h3>Danger Zone</h3>
+                        <p>Irreversible actions. Proceed with caution.</p>
+                        <button class="btn btn-danger" onclick="window.AdminModule.resetDatabase()">
+                            <i class="fas fa-trash-alt"></i> Reset Database
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── SETTINGS ─── -->
+            <section class="tab-content" id="tab-settings">
+                <div class="section-header">
+                    <div>
+                        <h2>System Settings</h2>
+                        <p class="subtitle">Configuration & Preferences</p>
+                    </div>
+                </div>
+
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-icon gradient-purple"><i class="fas fa-key"></i></div>
+                        <h3>AI Engine Config</h3>
+                        <p>Manage your Groq API Connection</p>
+                        <div class="form-group" style="margin-top:1rem">
+                            <label>Groq API Key</label>
+                            <div class="search-box" style="margin:0">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="input-api-key" placeholder="gsk_...">
+                            </div>
+                            <small id="current-key-status"
+                                style="color:var(--text-muted); margin-top:0.5rem; display:block"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Model selection</label>
+                            <select id="select-groq-model" class="select-filter" style="width:100%; height:45px">
+                                <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
+                                <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+                                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.SettingsModule.saveConfig()" style="width:100%">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                        <button class="btn btn-glass" onclick="window.SettingsModule.testConnection()"
+                            style="width:100%; margin-top:0.5rem">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ═══════════════════════ CHATBOT ═══════════════════════ -->
+    <div class="chatbot-fab" id="chatbot-fab" onclick="window.ChatbotModule.toggle()">
+        <i class="fas fa-robot"></i>
+        <div class="fab-pulse"></div>
+    </div>
+
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <div class="chatbot-title">
+                <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
+                <div>
+                    <h4>AI Career Assistant</h4>
+                    <span class="online-badge">Online</span>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="window.ChatbotModule.toggle()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chat-message bot">
+                <div class="message-bubble">
+                    👋 Hi! I'm your AI placement assistant. Ask me anything about career guidance, interview
+                    preparation, or placement strategies!
+                </div>
+            </div>
+        </div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbot-input" placeholder="Ask anything about placements..."
+                onkeypress="if(event.key==='Enter') window.ChatbotModule.send()">
+            <button onclick="window.ChatbotModule.send()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">AI Insight Details</h3>
+                <button class="modal-close" onclick="window.closeModal()">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+    <script src="js/api.js?v=2"></script>
+    <script src="js/chartManager.js?v=2"></script>
+    <script src="js/modules/dashboard.js?v=2"></script>
+    <script src="js/modules/studentManager.js?v=2"></script>
+    <script src="js/modules/companyManager.js?v=2"></script>
+    <script src="js/modules/aiAnalysis.js?v=2"></script>
+    <script src="js/modules/chatbot.js?v=2"></script>
+    <script src="js/modules/admin.js?v=2"></script>
+    <script src="js/modules/settings.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
+</body>
+
+</html>
