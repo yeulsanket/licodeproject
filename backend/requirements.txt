@@ -9,3 +9,4 @@ langchain==0.3.18
 langchain-groq==0.2.4
 langchain-core==0.3.34
 Faker==22.0.0
+gunicorn==21.2.0

@@ -1,7 +1,7 @@
 /**
  * API Service — Centralized fetch wrapper for Student Analyzer backend
  */
-const API_BASE = window.location.origin || 'http://localhost:5000';
+const API_BASE = localStorage.getItem('API_URL') || window.location.origin || 'http://localhost:5000';
 
 const API = {
     async request(endpoint, options = {}) {
