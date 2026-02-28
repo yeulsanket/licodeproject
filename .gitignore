@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Metadata
+.DS_Store
+Thumbs.db
+
+# Databases (SQLite)
+*.db
+backend/database/
+
+# Artifacts
+C:\Users\Sanket Yeul\.gemini\antigravity\brain\
