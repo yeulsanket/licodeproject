@@ -69,6 +69,8 @@ def create_app():
     def server_error(e):
         return {'error': 'Internal server error'}, 500
 
+    return app
+
 app = create_app()
 
 if __name__ == '__main__':
