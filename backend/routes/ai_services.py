@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import get_db
+from db import get_db
 from bson import ObjectId
 from ai_engine import analyze_resume, skill_gap_analysis, predict_salary, generate_roadmap, chat_with_ai
 

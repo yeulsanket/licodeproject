@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app import get_db
+from db import get_db
 from models import Student, Company, Placement
 from bson import ObjectId
 import random

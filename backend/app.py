@@ -11,14 +11,7 @@ from config import Config
 # Frontend directory path
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
 
-# Global db client
-mongo_client = None
-
-def get_db():
-    global mongo_client
-    if mongo_client is None:
-        mongo_client = MongoClient(Config.MONGO_URI)
-    return mongo_client[Config.MONGO_DB_NAME]
+from db import get_db
 
 def create_app():
     app = Flask(__name__, static_folder=None)

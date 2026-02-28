@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, Response
-from app import get_db
+from db import get_db
 from models import Student, Company, Placement
 import csv
 import io

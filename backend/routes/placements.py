@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import get_db
+from db import get_db
 from models import Placement
 from bson import ObjectId
 from datetime import datetime

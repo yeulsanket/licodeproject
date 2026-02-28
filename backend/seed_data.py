@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 # Add parent dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app, get_db
+from app import create_app
+from db import get_db
 
 # ─── Data pools ──────────────────────────────────────────────────────────
 
