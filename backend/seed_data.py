@@ -1,5 +1,5 @@
 """
-Seed script to generate realistic placement data.
+Seed script to generate realistic placement data for MongoDB.
 Run: python seed_data.py
 """
 import sys
@@ -11,8 +11,7 @@ from datetime import datetime, timedelta
 # Add parent dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app
-from models import db, Student, Company, Placement
+from app import create_app, get_db
 
 # ─── Data pools ──────────────────────────────────────────────────────────
 
@@ -104,30 +103,33 @@ def generate_email(name):
 def seed():
     app = create_app()
     with app.app_context():
-        print("🗑️  Clearing existing data...")
-        Placement.query.delete()
-        Company.query.delete()
-        Student.query.delete()
-        db.session.commit()
+        db = get_db()
+        
+        print("Clearing existing data...")
+        db.placements.delete_many({})
+        db.companies.delete_many({})
+        db.students.delete_many({})
 
         # ── Create Companies ──
-        print("🏢 Creating companies...")
+        print("Creating companies...")
         companies = []
         for name, industry, min_pkg, max_pkg in COMPANIES_DATA:
             req_skills = random.sample(SKILLS_POOL['Computer Science'] + SKILLS_POOL['Information Technology'], random.randint(3, 6))
-            company = Company(
-                name=name, industry=industry,
-                min_package=min_pkg, max_package=max_pkg,
-                requirements=json.dumps(req_skills),
-                website=f"https://www.{name.lower().replace(' ', '').replace(chr(39), '')}.com"
-            )
+            company = {
+                'name': name, 'industry': industry,
+                'min_package': min_pkg, 'max_package': max_pkg,
+                'requirements': req_skills,
+                'website': f"https://www.{name.lower().replace(' ', '').replace(chr(39), '')}.com",
+                'created_at': datetime.utcnow()
+            }
             companies.append(company)
-            db.session.add(company)
-        db.session.commit()
-        print(f"   ✅ Created {len(companies)} companies")
+            
+        result = db.companies.insert_many(companies)
+        inserted_company_ids = result.inserted_ids
+        print(f"   Created {len(inserted_company_ids)} companies")
 
         # ── Create Students ──
-        print("👨‍🎓 Creating students...")
+        print("Creating students...")
         students = []
         used_emails = set()
         for i in range(1000):
@@ -148,65 +150,81 @@ def seed():
             num_skills = random.randint(3, 10)
             skills = random.sample(SKILLS_POOL[branch], min(num_skills, len(SKILLS_POOL[branch])))
 
-            student = Student(
-                name=name, email=email, branch=branch,
-                cgpa=cgpa, skills=json.dumps(skills),
-                projects=random.randint(0, 8),
-                internships=random.randint(0, 4),
-                placed=False, gender=gender,
-                resume_text=f"Experienced {branch} student with skills in {', '.join(skills[:3])}."
-            )
+            student = {
+                'name': name, 'email': email, 'branch': branch,
+                'cgpa': cgpa, 'skills': skills,
+                'projects': random.randint(0, 8),
+                'internships': random.randint(0, 4),
+                'placed': False, 'gender': gender,
+                'resume_text': f"Experienced {branch} student with skills in {', '.join(skills[:3]) if skills else 'various areas'}.",
+                'created_at': datetime.utcnow()
+            }
             students.append(student)
-            db.session.add(student)
 
-        db.session.commit()
-        print(f"   ✅ Created {len(students)} students")
+        result = db.students.insert_many(students)
+        inserted_student_ids = result.inserted_ids
+        print(f"   Created {len(inserted_student_ids)} students")
 
         # ── Create Placements ──
-        print("📋 Creating placements...")
-        placement_count = 0
-        placed_indices = random.sample(range(len(students)), k=int(len(students) * 0.7))
+        print("Creating placements...")
+        placements = []
+        placed_indices = random.sample(range(len(inserted_student_ids)), k=int(len(inserted_student_ids) * 0.7))
 
-        for idx in placed_indices:
-            student = students[idx]
-            company = random.choice(companies)
+        # We need a list of company docs with original info for logic below
+        companies_info = list(db.companies.find({}))
 
-            # Higher CGPA → higher chance of better package
-            pkg_range = company.max_package - company.min_package
-            cgpa_factor = (student.cgpa - 4) / 6  # normalize 4-10 to 0-1
-            base_pkg = company.min_package + pkg_range * cgpa_factor * random.uniform(0.5, 1.2)
-            pkg = round(max(company.min_package, min(company.max_package, base_pkg)), 2)
+        for i, student_id in enumerate(inserted_student_ids):
+            if i in placed_indices:
+                student = students[i]  # Same order as inserted_student_ids
+                company = random.choice(companies_info)
 
-            roles_for_branch = ROLES.get(student.branch, ROLES['Computer Science'])
-            role = random.choice(roles_for_branch)
+                # Higher CGPA → higher chance of better package
+                pkg_range = company['max_package'] - company['min_package']
+                cgpa_factor = (student['cgpa'] - 4) / 6  # normalize 4-10 to 0-1
+                base_pkg = company['min_package'] + pkg_range * cgpa_factor * random.uniform(0.5, 1.2)
+                pkg = round(max(company['min_package'], min(company['max_package'], base_pkg)), 2)
 
-            month = random.randint(1, 12)
-            day = random.randint(1, 28)
-            placement_date = datetime(2025, month, day)
+                roles_for_branch = ROLES.get(student['branch'], ROLES['Computer Science'])
+                role = random.choice(roles_for_branch)
 
-            placement = Placement(
-                student_id=student.id,
-                company_id=company.id,
-                role=role,
-                package=pkg,
-                placement_date=placement_date,
-                status='confirmed'
+                month = random.randint(1, 12)
+                day = random.randint(1, 28)
+                placement_date = datetime(2025, month, day)
+
+                placement = {
+                    'student_id': student_id,
+                    'company_id': company['_id'],
+                    'role': role,
+                    'package': pkg,
+                    'placement_date': placement_date,
+                    'status': 'confirmed'
+                }
+                placements.append(placement)
+                
+                # Update local student record for later db update
+                student['placed'] = True
+                
+        # Bulk Insert Placements
+        if placements:
+            db.placements.insert_many(placements)
+            
+            # Update students who were placed
+            placed_ids = [inserted_student_ids[i] for i in placed_indices]
+            db.students.update_many(
+                {'_id': {'$in': placed_ids}},
+                {'$set': {'placed': True}}
             )
-            student.placed = True
-            db.session.add(placement)
-            placement_count += 1
 
-        db.session.commit()
-        print(f"   ✅ Created {placement_count} placements")
+        print(f"   Created {len(placements)} placements")
 
         # ── Summary ──
-        total = Student.query.count()
-        placed = Student.query.filter_by(placed=True).count()
-        print(f"\n🎉 Seed complete!")
+        total = db.students.count_documents({})
+        placed = db.students.count_documents({'placed': True})
+        print(f"\nSeed complete!")
         print(f"   Students: {total}")
         print(f"   Placed:   {placed} ({placed/total*100:.1f}%)")
-        print(f"   Companies: {Company.query.count()}")
-        print(f"   Placements: {Placement.query.count()}")
+        print(f"   Companies: {db.companies.count_documents({})}")
+        print(f"   Placements: {db.placements.count_documents({})}")
 
 
 if __name__ == '__main__':

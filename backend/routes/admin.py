@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, Response
-from models import db, Student, Company, Placement
+from app import get_db
+from models import Student, Company, Placement
 import csv
 import io
 
@@ -8,15 +9,18 @@ admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/api/admin/export/students', methods=['GET'])
 def export_students():
-    students = Student.query.all()
+    db = get_db()
+    students_cursor = db.students.find({})
+    
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['ID', 'Name', 'Email', 'Branch', 'CGPA', 'Skills', 'Projects', 'Internships', 'Placed', 'Gender'])
 
-    for s in students:
-        writer.writerow([s.id, s.name, s.email, s.branch, s.cgpa,
-                         ', '.join(s.get_skills()), s.projects, s.internships,
-                         'Yes' if s.placed else 'No', s.gender])
+    for s in students_cursor:
+        skills = s.get('skills', [])
+        writer.writerow([str(s['_id']), s.get('name'), s.get('email'), s.get('branch'), s.get('cgpa'),
+                         ', '.join(skills), s.get('projects'), s.get('internships'),
+                         'Yes' if s.get('placed') else 'No', s.get('gender')])
 
     output.seek(0)
     return Response(
@@ -28,14 +32,41 @@ def export_students():
 
 @admin_bp.route('/api/admin/export/placements', methods=['GET'])
 def export_placements():
-    placements = Placement.query.all()
+    db = get_db()
+    
+    pipeline = [
+        {
+            '$lookup': {
+                'from': 'students',
+                'localField': 'student_id',
+                'foreignField': '_id',
+                'as': 'student'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'companies',
+                'localField': 'company_id',
+                'foreignField': '_id',
+                'as': 'company'
+            }
+        },
+        {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
+        {'$unwind': {'path': '$company', 'preserveNullAndEmptyArrays': True}}
+    ]
+    
+    placements_cursor = db.placements.aggregate(pipeline)
+    
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['ID', 'Student', 'Company', 'Role', 'Package (LPA)', 'Date', 'Status'])
 
-    for p in placements:
-        writer.writerow([p.id, p.student.name if p.student else '', p.company.name if p.company else '',
-                         p.role, p.package, p.placement_date.strftime('%Y-%m-%d') if p.placement_date else '', p.status])
+    for p in placements_cursor:
+        s_name = p.get('student', {}).get('name', '')
+        c_name = p.get('company', {}).get('name', '')
+        date_str = p.get('placement_date').strftime('%Y-%m-%d') if p.get('placement_date') else ''
+        
+        writer.writerow([str(p['_id']), s_name, c_name, p.get('role'), p.get('package'), date_str, p.get('status')])
 
     output.seek(0)
     return Response(
@@ -47,12 +78,13 @@ def export_placements():
 
 @admin_bp.route('/api/admin/stats', methods=['GET'])
 def admin_stats():
+    db = get_db()
     return jsonify({
-        'total_students': Student.query.count(),
-        'total_companies': Company.query.count(),
-        'total_placements': Placement.query.count(),
-        'placed_students': Student.query.filter_by(placed=True).count(),
-        'branches': [b[0] for b in db.session.query(Student.branch).distinct().all()]
+        'total_students': db.students.count_documents({}),
+        'total_companies': db.companies.count_documents({}),
+        'total_placements': db.placements.count_documents({}),
+        'placed_students': db.students.count_documents({'placed': True}),
+        'branches': db.students.distinct('branch')
     })
 
 
@@ -63,8 +95,9 @@ def reset_database():
     if not confirm:
         return jsonify({'error': 'Please confirm reset by sending {"confirm": true}'}), 400
 
-    Placement.query.delete()
-    Company.query.delete()
-    Student.query.delete()
-    db.session.commit()
+    db = get_db()
+    db.placements.delete_many({})
+    db.companies.delete_many({})
+    db.students.delete_many({})
+    
     return jsonify({'message': 'Database reset successful'})

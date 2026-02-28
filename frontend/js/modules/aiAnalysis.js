@@ -86,7 +86,7 @@ const AIModule = {
         this.showLoading('skillgap-result');
 
         try {
-            const result = await API.skillGap({ student_id: parseInt(studentId), target_role: targetRole });
+            const result = await API.skillGap({ student_id: studentId, target_role: targetRole });
             this.renderSkillGapResult(result);
         } catch (e) {
             document.getElementById('skillgap-result').innerHTML = '<p style="color:var(--accent-rose)">⚠ Error analyzing skills. Check backend.</p>';
@@ -172,7 +172,7 @@ const AIModule = {
 
         try {
             const result = await API.generateRoadmap({
-                student_id: parseInt(studentId),
+                student_id: studentId,
                 career_goal: goal,
                 target_package: targetPkg ? parseFloat(targetPkg) : null
             });

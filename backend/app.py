@@ -3,14 +3,22 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, g
 from flask_cors import CORS
-from models import db
+from pymongo import MongoClient
 from config import Config
 
 # Frontend directory path
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
 
+# Global db client
+mongo_client = None
+
+def get_db():
+    global mongo_client
+    if mongo_client is None:
+        mongo_client = MongoClient(Config.MONGO_URI)
+    return mongo_client[Config.MONGO_DB_NAME]
 
 def create_app():
     app = Flask(__name__, static_folder=None)
@@ -18,11 +26,9 @@ def create_app():
 
     # Initialize extensions
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-    db.init_app(app)
 
-    # Ensure database directory exists
-    db_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database')
-    os.makedirs(db_dir, exist_ok=True)
+    # Database is accessed via get_db() where needed
+
 
     # Register blueprints
     from routes.students import students_bp
@@ -43,9 +49,11 @@ def create_app():
     app.register_blueprint(config_bp)
     app.register_blueprint(jobs_bp)
 
-    # Create tables
+    # Create collections if they don't exist (optional in MongoDB)
     with app.app_context():
-        db.create_all()
+        db_instance = get_db()
+        # Initialize collections explicitly if needed:
+        # db_instance.create_collection("students")
 
     # Serve frontend static files
     @app.route('/')
