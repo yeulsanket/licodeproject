@@ -51,9 +51,18 @@ def create_app():
 
     # Create collections if they don't exist (optional in MongoDB)
     with app.app_context():
-        db_instance = get_db()
-        # Initialize collections explicitly if needed:
-        # db_instance.create_collection("students")
+        try:
+            print("Checking MongoDB connection...")
+            db_instance = get_db()
+            # Try a simple command to verify connection
+            db_instance.command('ping')
+            print("MongoDB connection successful.")
+        except Exception as e:
+            print(f"MongoDB connection failed: {str(e)}")
+
+    @app.route('/health')
+    def health_check():
+        return {'status': 'healthy', 'mongodb': 'connected'}, 200
 
     # Serve frontend static files
     @app.route('/')
