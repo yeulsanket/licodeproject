@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     StudentManager.init();
     CompanyManager.load();
 
+    // ─── Apply role-based access restrictions ────────────────────
+    Auth.applyRoleRestrictions();
+
     console.log('🎓 Student Analyzer loaded successfully!');
 });
 

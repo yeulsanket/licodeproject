@@ -35,6 +35,10 @@ def get_stats():
 
     placement_rate = (placed_students / total_students * 100) if total_students > 0 else 0
 
+    # Average CGPA across all students
+    cgpa_result = list(db.students.aggregate([{'$group': {'_id': None, 'avg_cgpa': {'$avg': '$cgpa'}}}]))
+    avg_cgpa = round(cgpa_result[0]['avg_cgpa'], 2) if cgpa_result else 0
+
     return jsonify({
         'total_students': total_students,
         'placed_students': placed_students,
@@ -43,7 +47,8 @@ def get_stats():
         'highest_package': round(highest_package, 2),
         'lowest_package': round(lowest_package, 2),
         'total_companies': total_companies,
-        'total_placements': total_placements
+        'total_placements': total_placements,
+        'avg_cgpa': avg_cgpa
     })
 
 

@@ -4,16 +4,33 @@
 const API_BASE = localStorage.getItem('API_URL') || window.location.origin || 'http://localhost:5000';
 
 const API = {
+    getToken() {
+        return localStorage.getItem('auth_token');
+    },
+
     async request(endpoint, options = {}) {
+        const url = `${API_BASE}${endpoint}`;
+        const token = this.getToken();
+        const config = {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                ...(options.headers || {})
+            }
+        };
+        if (options.body) config.body = options.body;
+
         try {
-            const url = `${API_BASE}${endpoint}`;
-            const config = {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
-            };
             const res = await fetch(url, config);
             if (!res.ok) {
                 const err = await res.json().catch(() => ({ error: res.statusText }));
+                // If 401 on a protected (non-auth) route, force logout
+                if (res.status === 401 && !endpoint.includes('/auth/')) {
+                    if (typeof Auth !== 'undefined' && Auth.logout) Auth.logout();
+                    else window.location.href = '/login.html';
+                    return;
+                }
                 throw new Error(err.error || `HTTP ${res.status}`);
             }
             const contentType = res.headers.get('content-type');
@@ -26,6 +43,14 @@ const API = {
             throw err;
         }
     },
+
+    // ─── Auth ───
+    login(credentials) { return this.request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }); },
+    studentLogin(credentials) { return this.request('/api/auth/student/login', { method: 'POST', body: JSON.stringify(credentials) }); },
+    studentRegister(data) { return this.request('/api/auth/student/register', { method: 'POST', body: JSON.stringify(data) }); },
+    verifyToken() { return this.request('/api/auth/verify'); },
+    changePassword(data) { return this.request('/api/auth/change-password', { method: 'POST', body: JSON.stringify(data) }); },
+
 
     // ─── Students ───
     getStudents(params = {}) {

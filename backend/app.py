@@ -32,6 +32,7 @@ def create_app():
     from routes.admin import admin_bp
     from routes.config import config_bp
     from routes.jobs import jobs_bp
+    from routes.auth import auth_bp, ensure_admin_user
 
     app.register_blueprint(students_bp)
     app.register_blueprint(companies_bp)
@@ -41,15 +42,16 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(config_bp)
     app.register_blueprint(jobs_bp)
+    app.register_blueprint(auth_bp)
 
     # Create collections if they don't exist (optional in MongoDB)
     with app.app_context():
         try:
             print("Checking MongoDB connection...")
             db_instance = get_db()
-            # Try a simple command to verify connection
             db_instance.command('ping')
             print("MongoDB connection successful.")
+            ensure_admin_user()
         except Exception as e:
             print(f"MongoDB connection failed: {str(e)}")
 
@@ -61,6 +63,10 @@ def create_app():
     @app.route('/')
     def serve_frontend():
         return send_from_directory(os.path.abspath(FRONTEND_DIR), 'index.html')
+
+    @app.route('/login.html')
+    def serve_login():
+        return send_from_directory(os.path.abspath(FRONTEND_DIR), 'login.html')
 
     @app.route('/<path:path>')
     def serve_static(path):

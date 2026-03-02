@@ -22,6 +22,14 @@
 
     <!-- App CSS -->
     <link rel="stylesheet" href="styles/main.css">
+
+    <script>
+        // Auth gate — redirect to login if no token
+        (function () {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { window.location.href = '/login.html'; }
+        })();
+    </script>
 </head>
 
 <body>
@@ -65,6 +73,28 @@
                 <div class="ai-status">
                     <div class="status-dot"></div>
                     <span>AI Engine Active</span>
+                </div>
+                <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-color)">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem">
+                        <div style="display:flex; align-items:center; gap:0.6rem; min-width:0">
+                            <div
+                                style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                                <i class="fas fa-user" style="font-size:0.75rem; color:white"></i>
+                            </div>
+                            <div style="min-width:0">
+                                <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                                    id="sidebar-username">Admin</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted)" id="sidebar-role">Administrator
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="Auth.logout()" title="Logout"
+                            style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:8px; color:#fca5a5; padding:0.4rem 0.6rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s; flex-shrink:0;"
+                            onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+                            onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -545,16 +575,17 @@
     </div>
 
     <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
-    <script src="js/api.js?v=2"></script>
-    <script src="js/chartManager.js?v=2"></script>
-    <script src="js/modules/dashboard.js?v=2"></script>
-    <script src="js/modules/studentManager.js?v=2"></script>
-    <script src="js/modules/companyManager.js?v=2"></script>
-    <script src="js/modules/aiAnalysis.js?v=2"></script>
-    <script src="js/modules/chatbot.js?v=2"></script>
-    <script src="js/modules/admin.js?v=2"></script>
-    <script src="js/modules/settings.js?v=2"></script>
-    <script src="js/app.js?v=2"></script>
+    <script src="js/api.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/chartManager.js?v=3"></script>
+    <script src="js/modules/dashboard.js?v=3"></script>
+    <script src="js/modules/studentManager.js?v=3"></script>
+    <script src="js/modules/companyManager.js?v=3"></script>
+    <script src="js/modules/aiAnalysis.js?v=3"></script>
+    <script src="js/modules/chatbot.js?v=3"></script>
+    <script src="js/modules/admin.js?v=3"></script>
+    <script src="js/modules/settings.js?v=3"></script>
+    <script src="js/app.js?v=3"></script>
 </body>
 
 </html>

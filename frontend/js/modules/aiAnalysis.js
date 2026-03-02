@@ -1,9 +1,49 @@
 /**
  * AI Analysis Module — Resume analyzer, Skill gap, Salary predictor, Roadmap
+ * Role-aware: Admins can select any student; Students are locked to their own profile.
  */
 const AIModule = {
     async init() {
-        this.loadStudentDropdowns();
+        const user = Auth ? Auth.getUser() : null;
+        if (user && user.role === 'student') {
+            await this.initStudentMode(user);
+        } else {
+            await this.loadStudentDropdowns();
+        }
+    },
+
+    // ─── STUDENT MODE: auto-fill everything with the student's own data ──────
+    async initStudentMode(user) {
+        // Load dropdowns normally first so the options exist, then lock them
+        await this.loadStudentDropdowns();
+
+        // Auto-select this student in all dropdowns and lock them
+        ['skillgap-student', 'roadmap-student', 'jobmatch-student'].forEach(id => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            select.value = user.student_id;
+            select.disabled = true;
+            select.title = 'You can only analyze your own profile';
+            // Make it obvious visually
+            select.style.opacity = '0.7';
+            select.style.cursor = 'not-allowed';
+        });
+
+        // Pre-fill the salary predictor with their own stats
+        try {
+            const student = await API.getStudent(user.student_id);
+            const cgpaEl = document.getElementById('salary-cgpa');
+            const branchEl = document.getElementById('salary-branch');
+            const projectsEl = document.getElementById('salary-projects');
+            const internEl = document.getElementById('salary-internships');
+            const skillsEl = document.getElementById('salary-skills');
+
+            if (cgpaEl) cgpaEl.value = student.cgpa || '';
+            if (branchEl) branchEl.value = student.branch || '';
+            if (projectsEl) projectsEl.value = student.projects || 0;
+            if (internEl) internEl.value = student.internships || 0;
+            if (skillsEl) skillsEl.value = (student.skills || []).join(', ');
+        } catch (e) { console.error('Could not pre-fill student data:', e); }
     },
 
     async loadStudentDropdowns() {

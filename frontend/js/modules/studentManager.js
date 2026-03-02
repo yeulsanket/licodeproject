@@ -228,9 +228,19 @@ const StudentManager = {
                         <input type="number" id="std-internships" value="${data?.internships || 0}" min="0">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Skills (Comma separated)</label>
-                    <input type="text" id="std-skills" value="${(data?.skills || []).join(', ')}" placeholder="e.g. React, Node.js, Python">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Skills (Comma separated)</label>
+                        <input type="text" id="std-skills" value="${(data?.skills || []).join(', ')}" placeholder="e.g. React, Node.js, Python">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="std-gender" style="width:100%; height:45px; background:var(--input-bg,#1e2130); color:var(--text-primary,#fff); border:1px solid var(--border-color,#2a2f45); border-radius:var(--radius-md,8px); padding:0 1rem; font-size:0.95rem;">
+                            <option value="Male" ${(data?.gender === 'Male') ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${(data?.gender === 'Female') ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${(!data || data?.gender === 'Other') ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-glass" onclick="window.closeModal()">Cancel</button>
@@ -250,6 +260,7 @@ const StudentManager = {
             projects: parseInt(document.getElementById('std-projects').value) || 0,
             internships: parseInt(document.getElementById('std-internships').value) || 0,
             skills: document.getElementById('std-skills').value.split(',').map(s => s.trim()).filter(s => s),
+            gender: document.getElementById('std-gender').value,
             placed: false
         };
 
