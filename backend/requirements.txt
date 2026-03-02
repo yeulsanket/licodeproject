@@ -1,6 +1,5 @@
 Flask==3.0.0
 Flask-CORS==4.0.0
-Flask-SQLAlchemy==3.1.1
 pymongo==4.6.1
 dnspython==2.5.0
 python-dotenv==1.0.0
@@ -9,9 +8,9 @@ PyJWT==2.8.0
 bcrypt==4.1.2
 
 groq==0.5.0
-langchain==0.3.20
-langchain-groq==0.2.5
-langchain-core==0.3.40
+langchain==0.1.20
+langchain-groq==0.1.9
+langchain-core==0.1.52
 
 Faker==22.0.0
 gunicorn==21.2.0
