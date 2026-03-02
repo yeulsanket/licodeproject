@@ -77,7 +77,7 @@ const CompanyManager = {
     renderForm(title, data = null) {
         const isEdit = !!data;
         const html = `
-            <form id="company-form" class="crud-form" onsubmit="event.preventDefault(); CompanyManager.saveCompany(${isEdit ? data.id : ''})">
+            <form id="company-form" class="crud-form" onsubmit="event.preventDefault(); CompanyManager.saveCompany(${isEdit ? `'${data.id}'` : ''})">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Company Name</label>

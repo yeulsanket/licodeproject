@@ -153,3 +153,5 @@ def get_branches():
     db = get_db()
     branches = db.students.distinct('branch')
     return jsonify(branches)
+
+

@@ -197,7 +197,7 @@ const StudentManager = {
     renderForm(title, data = null) {
         const isEdit = !!data;
         const html = `
-            <form id="student-form" class="crud-form" onsubmit="event.preventDefault(); StudentManager.saveStudent(${isEdit ? data.id : ''})">
+            <form id="student-form" class="crud-form" onsubmit="event.preventDefault(); StudentManager.saveStudent(${isEdit ? `'${data.id}'` : ''})">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Full Name</label>
