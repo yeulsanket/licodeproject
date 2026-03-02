@@ -4,15 +4,13 @@ from config import Config
 
 try:
     from groq import Groq
-    from langchain_groq import ChatGroq
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_core.output_parsers import StrOutputParser
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False
 
 
-def get_groq_client():
+def _get_client():
+    """Return a Groq client if API key is configured, else None."""
     if not GROQ_AVAILABLE:
         return None
     api_key = Config.GROQ_API_KEY
@@ -21,53 +19,34 @@ def get_groq_client():
     return Groq(api_key=api_key)
 
 
-def get_langchain_llm():
-    if not GROQ_AVAILABLE:
+def _call_groq(prompt: str, system: str = "You are a helpful AI career advisor.", max_tokens: int = 2048) -> str | None:
+    """Call Groq API directly and return the text response, or None on failure."""
+    client = _get_client()
+    if not client:
         return None
-    api_key = Config.GROQ_API_KEY
-    if not api_key or api_key == 'your_groq_api_key_here':
+    try:
+        response = client.chat.completions.create(
+            model=Config.GROQ_MODEL or "llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=max_tokens
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"Groq API error: {e}")
         return None
-    return ChatGroq(
-        groq_api_key=api_key,
-        model_name=Config.GROQ_MODEL,
-        temperature=0.7,
-        max_tokens=2048
-    )
 
-
-def analyze_resume(resume_text, target_role="Software Engineer"):
-    llm = get_langchain_llm()
-    if not llm:
-        return _fallback_resume_analysis(resume_text, target_role)
-
-    prompt = ChatPromptTemplate.from_template(
-        """You are an expert career counselor analyzing resumes. Analyze the following resume for the target role of {target_role}.
-
-Resume:
-{resume_text}
-
-Respond in valid JSON format only:
-{{
-    "skills_found": ["skill1", "skill2"],
-    "experience_years": 0,
-    "education": "degree details",
-    "match_score": 75,
-    "strengths": ["strength1", "strength2"],
-    "weaknesses": ["weakness1", "weakness2"],
-    "recommendations": ["rec1", "rec2"],
-    "summary": "Brief professional summary"
-}}"""
-    )
 
 def _parse_json(text):
-    """Attempt to parse JSON from AI response, handle markdown wrapping."""
+    """Parse JSON from AI response, handling markdown code blocks."""
     if not text:
         return None
     try:
-        # Try direct parse
         return json.loads(text.strip())
     except json.JSONDecodeError:
-        # Try extracting from markdown block
         try:
             if "```json" in text:
                 content = text.split("```json")[1].split("```")[0].strip()
@@ -80,13 +59,10 @@ def _parse_json(text):
     return None
 
 
-def analyze_resume(resume_text, target_role="Software Engineer"):
-    llm = get_langchain_llm()
-    if not llm:
-        return _fallback_resume_analysis(resume_text, target_role)
+# ─── Resume Analyzer ──────────────────────────────────────────────────────────
 
-    prompt = ChatPromptTemplate.from_template(
-        """You are an expert career counselor analyzing resumes. Analyze the following resume for the target role of {target_role}.
+def analyze_resume(resume_text, target_role="Software Engineer"):
+    prompt = f"""Analyze the following resume for the target role of {target_role}.
 
 Resume:
 {resume_text}
@@ -102,31 +78,25 @@ Respond in valid JSON format only:
     "recommendations": ["rec1", "rec2"],
     "summary": "Brief professional summary"
 }}"""
-    )
 
-    chain = prompt | llm | StrOutputParser()
-    try:
-        result = chain.invoke({"resume_text": resume_text, "target_role": target_role})
+    result = _call_groq(prompt)
+    if result:
         parsed = _parse_json(result)
-        return parsed if parsed else _fallback_resume_analysis(resume_text, target_role)
-    except Exception as e:
-        return _fallback_resume_analysis(resume_text, target_role)
+        if parsed:
+            return parsed
+    return _fallback_resume_analysis(resume_text, target_role)
 
+
+# ─── Skill Gap Analysis ───────────────────────────────────────────────────────
 
 def skill_gap_analysis(student_skills, target_role, student_info=None):
-    llm = get_langchain_llm()
-    if not llm:
-        return _fallback_skill_gap(student_skills, target_role)
-
     info_str = ""
     if student_info:
-        info_str = f"Student CGPA: {student_info.get('cgpa', 'N/A')}, Projects: {student_info.get('projects', 0)}, Internships: {student_info.get('internships', 0)}, Branch: {student_info.get('branch', 'N/A')}"
+        info_str = f"\nStudent CGPA: {student_info.get('cgpa', 'N/A')}, Projects: {student_info.get('projects', 0)}, Internships: {student_info.get('internships', 0)}, Branch: {student_info.get('branch', 'N/A')}"
 
-    prompt = ChatPromptTemplate.from_template(
-        """You are an AI career advisor. Analyze the skill gap for a student targeting the role of {target_role}.
+    prompt = f"""Analyze the skill gap for a student targeting the role of {target_role}.
 
-Current Skills: {skills}
-{student_info}
+Current Skills: {', '.join(student_skills)}{info_str}
 
 Respond in valid JSON format only:
 {{
@@ -139,31 +109,24 @@ Respond in valid JSON format only:
     "match_percentage": 60,
     "recommendations": ["rec1", "rec2"]
 }}"""
-    )
 
-    chain = prompt | llm | StrOutputParser()
-    try:
-        result = chain.invoke({
-            "skills": ", ".join(student_skills),
-            "target_role": target_role,
-            "student_info": info_str
-        })
+    result = _call_groq(prompt)
+    if result:
         parsed = _parse_json(result)
-        return parsed if parsed else _fallback_skill_gap(student_skills, target_role)
-    except Exception:
-        return _fallback_skill_gap(student_skills, target_role)
+        if parsed:
+            return parsed
+    return _fallback_skill_gap(student_skills, target_role)
 
+
+# ─── Salary Predictor ─────────────────────────────────────────────────────────
 
 def predict_salary(cgpa, skills, projects, internships, branch):
-    llm = get_langchain_llm()
-    if not llm:
-        return _fallback_salary_prediction(cgpa, skills, projects, internships, branch)
+    skills_str = ', '.join(skills) if isinstance(skills, list) else skills
 
-    prompt = ChatPromptTemplate.from_template(
-        """You are an AI salary prediction expert for fresh graduates in India. Based on the candidate profile, predict a realistic salary range.
+    prompt = f"""Predict a realistic salary range for a fresh graduate in India with this profile:
 
 CGPA: {cgpa}
-Skills: {skills}
+Skills: {skills_str}
 Number of Projects: {projects}
 Internships: {internships}
 Branch: {branch}
@@ -181,42 +144,33 @@ Respond in valid JSON format only:
     "recommendations_to_increase": ["Learn cloud computing", "Get AWS certification"],
     "market_insight": "Brief market insight for this profile"
 }}"""
-    )
 
-    chain = prompt | llm | StrOutputParser()
-    try:
-        result = chain.invoke({
-            "cgpa": cgpa, "skills": ", ".join(skills) if isinstance(skills, list) else skills,
-            "projects": projects, "internships": internships, "branch": branch
-        })
+    result = _call_groq(prompt, system="You are an expert salary prediction AI for fresh graduates in India.")
+    if result:
         parsed = _parse_json(result)
-        return parsed if parsed else _fallback_salary_prediction(cgpa, skills, projects, internships, branch)
-    except Exception:
-        return _fallback_salary_prediction(cgpa, skills, projects, internships, branch)
+        if parsed:
+            return parsed
+    return _fallback_salary_prediction(cgpa, skills, projects, internships, branch)
 
+
+# ─── Career Roadmap ───────────────────────────────────────────────────────────
 
 def generate_roadmap(student_info, career_goal, target_package=None):
-    llm = get_langchain_llm()
-    if not llm:
-        return _fallback_roadmap(student_info, career_goal)
+    pkg_str = f"\nTarget Package: {target_package} LPA" if target_package else ""
 
-    pkg_str = f"Target Package: {target_package} LPA" if target_package else ""
-
-    prompt = ChatPromptTemplate.from_template(
-        """You are a career counselor creating a personalized 6-month roadmap for a student.
+    prompt = f"""Create a personalized 6-month career roadmap for this student.
 
 Student Profile:
-- Name: {name}
-- Branch: {branch}
-- CGPA: {cgpa}
-- Current Skills: {skills}
-- Projects: {projects}
-- Internships: {internships}
-{target_package}
+- Name: {student_info.get('name', 'Student')}
+- Branch: {student_info.get('branch', 'N/A')}
+- CGPA: {student_info.get('cgpa', 'N/A')}
+- Current Skills: {', '.join(student_info.get('skills', []))}
+- Projects: {student_info.get('projects', 0)}
+- Internships: {student_info.get('internships', 0)}{pkg_str}
 
 Career Goal: {career_goal}
 
-Create a detailed monthly plan. Respond in valid JSON format only:
+Respond in valid JSON format only:
 {{
     "career_goal": "{career_goal}",
     "current_readiness": 45,
@@ -234,28 +188,19 @@ Create a detailed monthly plan. Respond in valid JSON format only:
     "resources": ["resource1", "resource2"],
     "tips": ["tip1", "tip2"]
 }}"""
-    )
 
-    chain = prompt | llm | StrOutputParser()
-    try:
-        result = chain.invoke({
-            "name": student_info.get('name', 'Student'),
-            "branch": student_info.get('branch', 'N/A'),
-            "cgpa": student_info.get('cgpa', 'N/A'),
-            "skills": ", ".join(student_info.get('skills', [])),
-            "projects": student_info.get('projects', 0),
-            "internships": student_info.get('internships', 0),
-            "career_goal": career_goal,
-            "target_package": pkg_str
-        })
+    result = _call_groq(prompt, system="You are an expert career counselor for engineering students in India.")
+    if result:
         parsed = _parse_json(result)
-        return parsed if parsed else _fallback_roadmap(student_info, career_goal)
-    except Exception:
-        return _fallback_roadmap(student_info, career_goal)
+        if parsed:
+            return parsed
+    return _fallback_roadmap(student_info, career_goal)
 
+
+# ─── Chat with AI ─────────────────────────────────────────────────────────────
 
 def chat_with_ai(message, conversation_history=None):
-    client = get_groq_client()
+    client = _get_client()
     if not client:
         return _fallback_chat(message)
 
@@ -272,22 +217,22 @@ def chat_with_ai(message, conversation_history=None):
 
     try:
         response = client.chat.completions.create(
-            model=Config.GROQ_MODEL,
+            model=Config.GROQ_MODEL or "llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.7,
             max_tokens=1024
         )
         return response.choices[0].message.content
     except Exception as e:
-        return f"I'm having trouble connecting to the AI service. Please check your API key and try again. Error: {str(e)}"
+        return f"I'm having trouble connecting to the AI service. Error: {str(e)}"
 
 
-# ─── Fallback functions (when AI is unavailable) ─────────────────────────
+# ─── Fallback functions (when Groq API is unavailable) ───────────────────────
 
 def _fallback_resume_analysis(resume_text, target_role):
     words = resume_text.lower().split()
     common_skills = ['python', 'java', 'javascript', 'react', 'node', 'sql', 'html', 'css',
-                     'c++', 'machine', 'learning', 'flask', 'django', 'aws', 'docker', 'git']
+                     'c++', 'machine learning', 'flask', 'django', 'aws', 'docker', 'git']
     found_skills = [s for s in common_skills if s in words]
     return {
         "skills_found": found_skills,
@@ -295,10 +240,11 @@ def _fallback_resume_analysis(resume_text, target_role):
         "education": "Extracted from resume",
         "match_score": min(len(found_skills) * 10, 85),
         "strengths": found_skills[:3] if found_skills else ["Resume submitted"],
-        "weaknesses": ["Could not perform AI analysis - API key not configured"],
-        "recommendations": ["Configure Groq API key for detailed AI analysis"],
-        "summary": f"Basic analysis for {target_role}. Configure AI for comprehensive results."
+        "weaknesses": ["AI analysis unavailable — Groq API key not configured"],
+        "recommendations": ["Add your Groq API key in Render environment variables for full AI analysis"],
+        "summary": f"Basic keyword analysis for {target_role}."
     }
+
 
 def _fallback_skill_gap(skills, target_role):
     role_requirements = {
@@ -316,8 +262,9 @@ def _fallback_skill_gap(skills, target_role):
         "learning_path": [{"skill": s, "resource": f"Learn {s} online", "duration": "2-4 weeks", "priority": "high"} for s in missing[:5]],
         "estimated_time_to_ready": "3-6 months",
         "match_percentage": max(0, 100 - len(missing) * 15),
-        "recommendations": ["Configure Groq API for personalized AI analysis"]
+        "recommendations": ["Add Groq API key for personalized AI analysis"]
     }
+
 
 def _fallback_salary_prediction(cgpa, skills, projects, internships, branch):
     base = 3.5
@@ -330,26 +277,28 @@ def _fallback_salary_prediction(cgpa, skills, projects, internships, branch):
         "predicted_min_lpa": round(max(2.5, base - 1.5), 1),
         "predicted_max_lpa": round(base + 2.5, 1),
         "predicted_avg_lpa": round(base, 1),
-        "confidence": "low",
+        "confidence": "low (AI unavailable)",
         "factors": [
             {"factor": "CGPA", "impact": "positive" if cgpa > 7 else "neutral", "detail": f"CGPA: {cgpa}"},
             {"factor": "Skills", "impact": "positive", "detail": f"{skill_count} skills listed"}
         ],
-        "recommendations_to_increase": ["Configure Groq API for AI-powered predictions"],
-        "market_insight": "Basic estimation. Enable AI for accurate market-based predictions."
+        "recommendations_to_increase": ["Add Groq API key for AI-powered predictions"],
+        "market_insight": "Basic estimation. Add Groq API key for accurate market-based predictions."
     }
+
 
 def _fallback_roadmap(student_info, career_goal):
     return {
         "career_goal": career_goal,
         "current_readiness": 40,
         "months": [
-            {"month": i, "title": f"Month {i}", "focus_areas": ["Study core concepts"], "skills_to_learn": ["Configure AI for details"], "projects": ["Practice project"], "certifications": [], "milestones": [f"Complete month {i} goals"]}
+            {"month": i, "title": f"Month {i}", "focus_areas": ["Study core concepts"], "skills_to_learn": ["Add Groq API for detailed plan"], "projects": ["Practice project"], "certifications": [], "milestones": [f"Complete month {i} goals"]}
             for i in range(1, 7)
         ],
-        "resources": ["Configure Groq API key for personalized AI roadmap"],
+        "resources": ["Add Groq API key for personalized AI roadmap"],
         "tips": ["Focus on fundamentals", "Build projects", "Practice coding daily"]
     }
 
+
 def _fallback_chat(message):
-    return "👋 I'm the AI placement assistant! To unlock full AI-powered responses, please configure your Groq API key in the backend/.env file. In the meantime, I can tell you that consistent practice, building projects, and networking are key to landing a great placement!"
+    return "👋 I'm the AI placement assistant! To unlock full AI-powered responses, please add your GROQ_API_KEY in the Render environment variables dashboard. In the meantime, I can tell you that consistent practice, building projects, and networking are key to landing a great placement!"
