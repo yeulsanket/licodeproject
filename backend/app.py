@@ -59,6 +59,11 @@ def create_app():
     def health_check():
         return {'status': 'healthy', 'mongodb': 'connected'}, 200
 
+    @app.route('/api/ping')
+    def ping():
+        """Lightweight keep-alive endpoint — prevents Render free tier from sleeping."""
+        return {'status': 'ok'}, 200
+
     # Serve frontend static files
     @app.route('/')
     def serve_frontend():

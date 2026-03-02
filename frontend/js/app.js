@@ -58,6 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Apply role-based access restrictions ────────────────────
     Auth.applyRoleRestrictions();
 
+    // ─── Keep-Alive Ping (prevents Render free tier sleep) ───────
+    // Render spins down after 15 min of inactivity — ping every 10 min
+    const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+    const keepAlive = () => {
+        fetch('/api/ping')
+            .then(() => console.log('💓 Keep-alive ping sent'))
+            .catch(() => { }); // Silently ignore errors
+    };
+    keepAlive(); // Ping immediately on load
+    setInterval(keepAlive, PING_INTERVAL_MS);
+
     console.log('🎓 Student Analyzer loaded successfully!');
 });
 
