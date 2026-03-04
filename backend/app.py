@@ -3,13 +3,15 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, send_from_directory, g
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
 from config import Config
 
-# Frontend directory path
-FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+# Serve React build output; fall back to old frontend for local dev
+_REACT_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend-react', 'dist')
+_OLD_FRONTEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+FRONTEND_DIR = _REACT_DIST if os.path.isdir(_REACT_DIST) else _OLD_FRONTEND
 
 from db import get_db
 

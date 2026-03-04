@@ -1,20 +1,22 @@
 services:
-  # ─── Single Backend Service (serves API + Frontend) ─────────────────────────
+  # ─── Single Service: Build React then serve via Flask ─────────────────────
   - type: web
     name: student-analyzer
     env: python
     region: oregon
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    rootDir: .
+    buildCommand: >
+      cd frontend-react && npm ci && npm run build &&
+      cd ../backend && pip install -r requirements.txt
+    startCommand: cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: MONGO_URI
-        sync: false          # Set manually in Render dashboard
+        sync: false
       - key: MONGO_DB_NAME
         value: student_analyzer
       - key: GROQ_API_KEY
-        sync: false          # Set manually in Render dashboard
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: GROQ_MODEL
