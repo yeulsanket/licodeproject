@@ -13,5 +13,5 @@ class Config:
     print(f"DEBUG: MONGO_URI starts with: '{MONGO_URI[:15]}...'")
     
     MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'student_analyzer').strip("'\" ")
-    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
-    GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip("'\" ")
+    GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile').strip("'\" ")
