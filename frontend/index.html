@@ -24,10 +24,42 @@
     <link rel="stylesheet" href="styles/main.css">
 
     <script>
-        // Auth gate — redirect to login if no token
-        (function () {
+        // ── Auth Gate ── runs BEFORE anything renders ─────────────────────
+        // Hide the page until auth check completes to prevent dashboard flash
+        document.documentElement.style.opacity = '0';
+
+        (async function authGate() {
             const token = localStorage.getItem('auth_token');
-            if (!token) { window.location.href = '/login.html'; }
+
+            // No token at all → go to login immediately
+            if (!token) {
+                window.location.replace('/login.html');
+                return;
+            }
+
+            // Token exists → verify it with the backend
+            try {
+                const apiBase = window.location.origin;
+                const res = await fetch(apiBase + '/api/auth/verify', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (res.ok) {
+                    // Valid token — show the page
+                    document.documentElement.style.opacity = '1';
+                } else {
+                    // Token invalid / expired — wipe session and go to login
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('auth_user');
+                    window.location.replace('/login.html');
+                }
+            } catch (e) {
+                // Network error — if token exists in localStorage, allow
+                // access but flag as offline (don't lock users out due to
+                // a temporary network blip)
+                console.warn('Auth verify failed (network?), using cached session:', e);
+                document.documentElement.style.opacity = '1';
+            }
         })();
     </script>
 </head>

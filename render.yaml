@@ -1,7 +1,7 @@
 services:
-  # ─── Backend Service ────────────────────────────────────────────────
+  # ─── Single Backend Service (serves API + Frontend) ─────────────────────────
   - type: web
-    name: student-analyzer-api
+    name: student-analyzer
     env: python
     region: oregon
     plan: free
@@ -10,25 +10,12 @@ services:
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: MONGO_URI
-        sync: false # Set manually in Render dashboard
+        sync: false          # Set manually in Render dashboard
       - key: MONGO_DB_NAME
         value: student_analyzer
       - key: GROQ_API_KEY
-        sync: false # Set manually in Render dashboard
+        sync: false          # Set manually in Render dashboard
       - key: SECRET_KEY
         generateValue: true
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
-
-  # ─── Frontend Static Site ──────────────────────────────────────────
-  - type: static
-    name: student-analyzer-frontend
-    env: static
-    region: oregon
-    plan: free
-    rootDir: frontend
-    publishDir: .
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
