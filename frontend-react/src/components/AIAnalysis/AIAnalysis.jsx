@@ -275,7 +275,7 @@ function JobMatchPanel({ students, lockedId }) {
 
 /* ── AI Chat ─────────────────────────────────────────────────────── */
 function ChatPanel() {
-    const [msgs, setMsgs] = useState([{ role: 'ai', content: "👋 Hi! I'm your AI placement assistant. Ask me anything about career guidance, interview prep, or placement tips!" }]);
+    const [msgs, setMsgs] = useState([{ role: 'assistant', content: "👋 Hi! I'm your AI placement assistant. Ask me anything about career guidance, interview prep, or placement tips!" }]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -286,9 +286,9 @@ function ChatPanel() {
         setInput('');
         setLoading(true);
         try {
-            const res = await api.chatWithAI({ message: input, history: msgs.filter(m => m.role !== 'ai' || msgs.indexOf(m) > 0) });
-            setMsgs(m => [...m, { role: 'ai', content: res.response }]);
-        } catch (e) { setMsgs(m => [...m, { role: 'ai', content: 'Sorry, I had trouble connecting. Please try again.' }]); }
+            const res = await api.chatWithAI({ message: input, history: msgs });
+            setMsgs(m => [...m, { role: 'assistant', content: res.response }]);
+        } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: 'Sorry, I had trouble connecting. Please try again.' }]); }
         finally { setLoading(false); }
     }
 
@@ -296,7 +296,7 @@ function ChatPanel() {
         <div>
             <h4 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}><i className="fas fa-comments" style={{ color: 'var(--accent-indigo)', marginRight: 8 }} />AI Placement Assistant</h4>
             <div className="chat-messages">
-                {msgs.map((m, i) => <div key={i} className={`chat-msg ${m.role}`}>{m.content}</div>)}
+                {msgs.map((m, i) => <div key={i} className={`chat-msg ${m.role === 'assistant' ? 'ai' : 'user'}`}>{m.content}</div>)}
                 {loading && <div className="chat-msg ai"><i className="fas fa-spinner fa-spin" style={{ color: 'var(--text-muted)' }} /> Thinking...</div>}
             </div>
             <div className="chat-input-wrap">

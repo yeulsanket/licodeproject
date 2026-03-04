@@ -211,7 +211,12 @@ def chat_with_ai(message, conversation_history=None):
 
     if conversation_history:
         for msg in conversation_history[-6:]:
-            messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+            role = msg.get("role", "user")
+            # Groq only accepts: 'user', 'assistant', 'system'
+            # Frontend uses 'ai' as display role — map it to 'assistant'
+            if role not in ("user", "assistant", "system"):
+                role = "assistant"
+            messages.append({"role": role, "content": msg.get("content", "")})
 
     messages.append({"role": "user", "content": message})
 
