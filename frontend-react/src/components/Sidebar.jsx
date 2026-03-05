@@ -5,6 +5,7 @@ const NAV = [
     { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-chart-pie', roles: ['admin', 'student'] },
     { id: 'management', label: 'Management', icon: 'fas fa-users-cog', roles: ['admin'] },
     { id: 'ai-analysis', label: 'AI Analysis', icon: 'fas fa-robot', roles: ['admin', 'student'] },
+    { id: 'mock-test', label: 'Mock Test', icon: 'fas fa-vial', roles: ['student'] },
     { id: 'admin', label: 'Admin Panel', icon: 'fas fa-user-shield', roles: ['admin'] },
     { id: 'settings', label: 'Settings', icon: 'fas fa-cog', roles: ['admin'] },
 ];

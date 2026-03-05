@@ -8,6 +8,7 @@ const Management = lazy(() => import('../components/Management/Management'));
 const AIAnalysis = lazy(() => import('../components/AIAnalysis/AIAnalysis'));
 const AdminPanel = lazy(() => import('../components/Admin/AdminPanel'));
 const Settings = lazy(() => import('../components/Settings/Settings'));
+const MockTest = lazy(() => import('../components/MockTest/MockTest'));
 
 import { useAuth } from '../context/AuthContext';
 
@@ -37,6 +38,7 @@ export default function MainApp() {
             case 'ai-analysis': return <AIAnalysis />;
             case 'admin': return <AdminPanel />;
             case 'settings': return <Settings />;
+            case 'mock-test': return <MockTest />;
             default: return null;
         }
     }

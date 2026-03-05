@@ -232,7 +232,81 @@ def chat_with_ai(message, conversation_history=None):
         return f"I'm having trouble connecting to the AI service. Error: {str(e)}"
 
 
+
+# ─── Mock Test Generator ─────────────────────────────────────────────────────
+
+def generate_mock_test(difficulty="Medium", subject="General Aptitude & Coding", student_id=None):
+    """Generate a list of multiple choice questions based on difficulty and subject."""
+    
+    prompt = f"""Generate a mock placement test with 20 multiple-choice questions. 
+    Make sure the questions are diverse and strictly follow the {difficulty} difficulty level for {subject}.
+    
+    Respond in valid JSON format only. Use this exact structure:
+{{
+    "test_title": "{difficulty} level {subject} Test",
+    "difficulty": "{difficulty}",
+    "subject": "{subject}",
+    "questions": [
+        {{
+            "question": "Question text here?",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correct_answer": 0,
+            "explanation": "Brief explanation."
+        }}
+    ]
+}}"""
+
+    # Higher token limit for 20 questions
+    result = _call_groq(prompt, system="You are an expert technical interviewer. Provide 20 diverse MCQs.", max_tokens=4096)
+    if result:
+        parsed = _parse_json(result)
+        if parsed and isinstance(parsed.get('questions'), list) and len(parsed['questions']) > 0:
+            return parsed
+    return _fallback_mock_test(difficulty, subject)
+
+
 # ─── Fallback functions (when Groq API is unavailable) ───────────────────────
+
+def _fallback_mock_test(difficulty, subject):
+    # Providing some static questions as fallback
+    return {
+        "test_title": f"{difficulty} level {subject} Test (Static)",
+        "difficulty": difficulty,
+        "subject": subject,
+        "questions": [
+            {
+                "question": "What is the time complexity of searching an element in a binary search tree in the worst case?",
+                "options": ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
+                "correct_answer": 2,
+                "explanation": "In the worst case (skewed tree), BST search takes O(n)."
+            },
+            {
+                "question": "Which data structure uses LIFO (Last In First Out) principle?",
+                "options": ["Queue", "Stack", "Linked List", "Array"],
+                "correct_answer": 1,
+                "explanation": "Stack follows LIFO principle."
+            },
+            {
+                "question": "In Python, which of the following is an immutable data type?",
+                "options": ["List", "Dictionary", "Set", "Tuple"],
+                "correct_answer": 3,
+                "explanation": "Tuples are immutable in Python."
+            },
+            {
+                "question": "What does SQL stand for?",
+                "options": ["Structured Query Language", "Sequential Query Language", "Simple Query Language", "System Query Language"],
+                "correct_answer": 0,
+                "explanation": "SQL stands for Structured Query Language."
+            },
+            {
+                "question": "Which of the following is NOT a fundamental principle of OOP?",
+                "options": ["Encapsulation", "Inheritance", "Compilation", "Polymorphism"],
+                "correct_answer": 2,
+                "explanation": "Compilation is a process, not an OOP principle (which are Encapsulation, Inheritance, Polymorphism, Abstraction)."
+            }
+        ]
+    }
+
 
 def _fallback_resume_analysis(resume_text, target_role):
     words = resume_text.lower().split()

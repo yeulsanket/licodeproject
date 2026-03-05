@@ -66,6 +66,9 @@ const api = {
     generateRoadmap: (d) => api.request('/api/ai/roadmap', { method: 'POST', body: JSON.stringify(d) }),
     getJobRecommendations: (id) => api.request(`/api/ai/job-recommendations/${id}`),
     chatWithAI: (d) => api.request('/api/ai/chat', { method: 'POST', body: JSON.stringify(d) }),
+    generateTest: (diff, sub, id) => api.request('/api/ai/generate-test', { method: 'POST', body: JSON.stringify({ difficulty: diff, subject: sub, student_id: id }) }),
+    saveTestResult: (d) => api.request('/api/ai/save-test-result', { method: 'POST', body: JSON.stringify(d) }),
+    getTestHistory: (id) => api.request(`/api/ai/test-history/${id}`),
 
     // Admin
     getAdminStudents: (p = {}) => api.request(`/api/admin/students?${new URLSearchParams(p)}`),
